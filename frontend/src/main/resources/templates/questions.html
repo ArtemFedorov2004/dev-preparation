@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en"
+      xmlns:th="http://www.thymeleaf.org">
+<div th:replace="~{fragments/head :: head}"></div>
+<body>
+<div th:replace="~{fragments/navbar :: navigation}"></div>
+<section class="max-w-7xl mx-auto px-4 py-10">
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900">Вопросы</h1>
+        <p class="text-gray-600 mt-2">Все вопросы для подготовки к собеседованию</p>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 mb-8">
+        <form method="get" action="/questions" class="flex flex-wrap gap-4 items-end">
+
+            <div class="flex-1 min-w-[160px]">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Тема</label>
+                <select name="topic"
+                        class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    <option value="">Все темы</option>
+                    <option th:each="t : ${topics}"
+                            th:value="${t.slug}"
+                            th:text="${t.name}"
+                            th:selected="${selectedTopic == t.slug}">Тема
+                    </option>
+                </select>
+            </div>
+
+            <div class="flex-1 min-w-[140px]">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Уровень</label>
+                <select name="level"
+                        class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    <option value="">Все уровни</option>
+                    <option th:each="lvl : ${levels}"
+                            th:value="${lvl.value}"
+                            th:text="${lvl.displayName}"
+                            th:selected="${selectedLevel == lvl}">Уровень
+                    </option>
+                </select>
+            </div>
+
+            <div class="flex-1 min-w-[140px]">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Тег</label>
+                <select name="tag"
+                        class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    <option value="">Все теги</option>
+                    <option th:each="tag : ${tags}"
+                            th:value="${tag.slug}"
+                            th:text="${tag.name}"
+                            th:selected="${selectedTag == tag.slug}">Тег
+                    </option>
+                </select>
+            </div>
+
+            <div class="flex gap-2">
+                <button type="submit"
+                        class="bg-indigo-600 text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors">
+                    Применить
+                </button>
+                <a href="/questions"
+                   class="bg-gray-100 text-gray-700 px-5 py-2 rounded-lg text-sm font-medium hover:bg-gray-200 transition-colors">
+                    Сбросить
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <div th:if="${pagination != null}"
+         class="text-sm text-gray-500 mb-4">
+        Показаны
+        <span class="font-medium text-gray-900"
+              th:text="${(pagination.page - 1) * pagination.limit + 1}">1</span>
+        –
+        <span class="font-medium text-gray-900"
+              th:text="${T(java.lang.Math).min(pagination.page * pagination.limit, pagination.total)}">20</span>
+        из
+        <span class="font-medium text-gray-900" th:text="${pagination.total}">0</span>
+        вопросов
+    </div>
+
+    <div th:if="${questions != null and !questions.isEmpty()}"
+         class="space-y-3">
+        <a th:each="q : ${questions}"
+           th:href="@{/questions/{slug}(slug=${q.slug})}"
+           class="block bg-white rounded-xl p-5 shadow-sm border border-gray-100 hover:shadow-md hover:border-indigo-200 transition-all group">
+            <div class="flex items-start justify-between gap-4">
+                <div class="flex-1 min-w-0">
+                    <h3 class="text-base font-semibold text-gray-900 group-hover:text-indigo-600 transition-colors"
+                        th:text="${q.title}">Название вопроса</h3>
+                    <div class="flex flex-wrap gap-2 mt-2 items-center">
+                        <span th:if="${q.topic != null}"
+                              class="text-xs text-gray-500">
+                            <span th:text="${q.topic.icon ?: '📋'}"></span>
+                            <span th:text="${q.topic.name}"></span>
+                        </span>
+                        <span th:each="tag : ${q.tags}"
+                              class="inline-block bg-gray-100 text-gray-600 text-xs px-2 py-0.5 rounded-full"
+                              th:text="${tag.name}">тег</span>
+                    </div>
+                </div>
+                <div class="shrink-0">
+                    <span th:text="${q.level.displayName}"
+                          th:classappend="${q.level.value == 'junior'} ? 'bg-green-100 text-green-700' : (${q.level.value == 'middle'} ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700')"
+                          class="text-xs font-medium px-2.5 py-1 rounded-full">уровень</span>
+                </div>
+            </div>
+        </a>
+    </div>
+
+    <div th:if="${questions == null or questions.isEmpty()}"
+         class="text-center py-20">
+        <div class="text-6xl mb-4">🔍</div>
+        <h2 class="text-xl font-semibold text-gray-700 mb-2">Вопросы не найдены</h2>
+        <p class="text-gray-500 mb-4">Попробуйте изменить параметры фильтрации.</p>
+        <a href="/questions" class="text-indigo-600 hover:underline">Сбросить фильтры</a>
+    </div>
+
+    <div th:if="${pagination != null and pagination.total > pagination.limit}"
+         class="mt-8 flex justify-center gap-2">
+        <a th:if="${pagination.page > 1}"
+           th:href="@{/questions(topic=${selectedTopic}, tag=${selectedTag}, level=${selectedLevel?.value}, page=${pagination.page - 1}, limit=${pagination.limit})}"
+           class="px-4 py-2 rounded-lg border border-gray-200 text-sm hover:border-indigo-300 transition-colors">
+            ← Назад
+        </a>
+        <span class="px-4 py-2 rounded-lg bg-indigo-600 text-white text-sm"
+              th:text="'Страница ' + ${pagination.page}">Страница 1</span>
+        <a th:if="${pagination.page * pagination.limit < pagination.total}"
+           th:href="@{/questions(topic=${selectedTopic}, tag=${selectedTag}, level=${selectedLevel?.value}, page=${pagination.page + 1}, limit=${pagination.limit})}"
+           class="px-4 py-2 rounded-lg border border-gray-200 text-sm hover:border-indigo-300 transition-colors">
+            Вперед →
+        </a>
+    </div>
+</section>
+<div th:replace="~{fragments/footer :: footer}"></div>
+</body>
+</html>
