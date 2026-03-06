@@ -1,0 +1,70 @@
+# ========================
+# Go
+# ========================
+backend/bin/
+backend/*.exe
+backend/*.test
+backend/*.out
+backend/vendor/
+backend/docs/swagger.json
+backend/docs/swagger.yaml
+
+# ========================
+# Java / Maven
+# ========================
+frontend/target/
+frontend/.mvn/wrapper/maven-wrapper.jar
+frontend/*.class
+frontend/*.jar
+frontend/*.war
+frontend/*.ear
+frontend/.settings/
+frontend/.project
+frontend/.classpath
+frontend/.idea/
+frontend/*.iml
+
+# ========================
+# Docker
+# ========================
+infra/keycloak/data/
+infra/postgres/data/
+infra/redis/data/
+
+# ========================
+# Environment / Secrets
+# ========================
+.env
+.env.local
+.env.*.local
+*.env
+
+# ========================
+# OS
+# ========================
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# ========================
+# IDE
+# ========================
+.idea/
+.vscode/
+*.iml
+*.iws
+*.ipr
+
+# ========================
+# Logs
+# ========================
+*.log
+logs/
+
+# ========================
+# Temp
+# ========================
+tmp/
+temp/
