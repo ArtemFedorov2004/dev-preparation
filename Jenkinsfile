@@ -3,7 +3,7 @@ pipeline {
 
     environment {
         REPO_URL        = 'https://github.com/ArtemFedorov2004/dev-preparation'
-        BRANCH          = 'main'
+        BRANCH          = 'master'
 
         VPS_USER        = 'root'
         VPS_DEPLOY_DIR  = '/opt/devprep'
