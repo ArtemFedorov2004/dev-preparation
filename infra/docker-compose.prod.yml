@@ -1,0 +1,71 @@
+version: "3.9"
+
+services:
+  postgres:
+    restart: always
+    ports: !reset []
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
+
+  keycloak:
+    restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1G
+
+  redis:
+    restart: always
+    ports: !reset []
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 128M
+
+  backend:
+    build: !reset null
+    image: localhost:5000/devprep/backend:latest
+    restart: always
+    ports: !reset []
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
+
+  frontend:
+    build: !reset null
+    image: localhost:5000/devprep/frontend:latest
+    restart: always
+    ports: !reset []
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
+
+  nginx:
+    image: nginx:alpine
+    container_name: devprep-nginx
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - type: bind
+        source: ./nginx/nginx.conf
+        target: /etc/nginx/nginx.conf
+        read_only: true
+    depends_on:
+      - frontend
+      - backend
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 64M
