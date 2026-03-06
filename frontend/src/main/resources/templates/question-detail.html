@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en"
+      xmlns:th="http://www.thymeleaf.org">
+<head>
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css">
+    <link rel="stylesheet" th:href="@{/css/question-detail.css}"/>
+</head>
+<div th:replace="~{fragments/head :: head}"></div>
+<body>
+<div th:replace="~{fragments/navbar :: navigation}"></div>
+<section class="max-w-4xl mx-auto px-4 py-10">
+    <nav class="text-sm text-gray-500 mb-6 flex flex-wrap items-center gap-1">
+        <a href="/" class="hover:text-indigo-600">Главная</a>
+        <span>/</span>
+        <a href="/topics" class="hover:text-indigo-600">Темы</a>
+        <th:block th:if="${question.topic != null}">
+            <span>/</span>
+            <a th:href="@{/topics/{slug}(slug=${question.topic.slug})}"
+               class="hover:text-indigo-600"
+               th:text="${question.topic.name}">Тема</a>
+        </th:block>
+        <span>/</span>
+        <span class="text-gray-900 truncate max-w-xs" th:text="${question.title}">Вопрос</span>
+    </nav>
+
+    <div class="mb-6">
+        <div class="flex flex-wrap items-center gap-3 mb-3">
+            <span th:text="${question.level.displayName}"
+                  th:classappend="${question.level.value == 'junior'} ? 'bg-green-100 text-green-700' : (${question.level.value == 'middle'} ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700')"
+                  class="text-xs font-semibold px-3 py-1 rounded-full">уровень</span>
+            <a th:if="${question.topic != null}"
+               th:href="@{/topics/{slug}(slug=${question.topic.slug})}"
+               class="text-xs text-indigo-600 hover:underline"
+               th:text="${question.topic.name}">Тема</a>
+            <span th:each="tag : ${question.tags}"
+                  class="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full"
+                  th:text="${tag.name}">тег</span>
+        </div>
+        <h1 class="text-2xl font-bold text-gray-900 leading-snug" th:text="${question.title}">Название вопроса</h1>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
+        <h2 class="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+            <span>💡</span> Ответ
+        </h2>
+        <div id="answer-content" class="markdown-body hidden"
+             th:attr="data-markdown=${question.answer}"></div>
+        <noscript>
+            <pre class="whitespace-pre-wrap text-sm text-gray-700" th:text="${question.answer}"></pre>
+        </noscript>
+    </div>
+
+    <div class="flex flex-wrap gap-4 mt-8 pt-6 border-t border-gray-100">
+        <a
+                th:href="@{/topics/{slug}(slug=${question.topic.slug})}"
+                class="text-sm text-indigo-600 hover:underline flex items-center gap-1">
+            ← Назад к <span th:text="${question.topic.name}">теме</span>
+        </a>
+        <a href="/questions"
+           class="text-sm text-gray-500 hover:text-indigo-600 hover:underline flex items-center gap-1">
+            Все вопросы
+        </a>
+    </div>
+</section>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+<th:block>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var answerEl = document.getElementById('answer-content');
+            if (answerEl) {
+                var raw = answerEl.getAttribute('data-markdown') || '';
+                answerEl.innerHTML = marked.parse(raw);
+                answerEl.classList.remove('hidden');
+            }
+
+            document.querySelectorAll('pre code').forEach(function (block) {
+                hljs.highlightElement(block);
+            });
+        });
+    </script>
+</th:block>
+</body>
+</html>
