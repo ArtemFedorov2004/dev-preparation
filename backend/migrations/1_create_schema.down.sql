@@ -1,0 +1,5 @@
+DROP TABLE IF EXISTS question_tags;
+DROP TABLE IF EXISTS questions;
+DROP TABLE IF EXISTS tags;
+DROP TABLE IF EXISTS topics;
+DROP TYPE IF EXISTS question_level;
