@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en"
+      xmlns:th="http://www.thymeleaf.org">
+<div th:replace="~{fragments/head :: head}"></div>
+<body>
+<div th:replace="~{fragments/navbar :: navigation}"></div>
+<section class="max-w-7xl mx-auto px-4 py-10">
+    <nav class="text-sm text-gray-500 mb-6">
+        <a href="/" class="hover:text-indigo-600">Главная</a>
+        <span class="mx-2">/</span>
+        <a href="/topics" class="hover:text-indigo-600">Темы</a>
+        <span class="mx-2">/</span>
+        <span class="text-gray-900" th:text="${topic.name}">Тема</span>
+    </nav>
+
+    <div class="mb-8 flex items-center gap-4">
+        <span class="text-5xl" th:text="${topic.icon ?: '📋'}">📋</span>
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900" th:text="${topic.name}">Название темы</h1>
+            <p class="text-gray-600 mt-1" th:text="${topic.description ?: ''}"></p>
+        </div>
+    </div>
+
+    <div class="flex flex-wrap gap-3 mb-8">
+        <a th:href="@{/topics/{slug}(slug=${topic.slug})}"
+           th:classappend="${selectedLevel == null} ? 'bg-indigo-600 text-white' : 'bg-white text-gray-700 border border-gray-200 hover:border-indigo-300'"
+           class="px-4 py-2 rounded-full text-sm font-medium transition-colors">
+            Все
+        </a>
+        <th:block th:each="lvl : ${levels}">
+            <a th:href="@{/topics/{slug}(slug=${topic.slug}, level=${lvl.value})}"
+               th:text="${lvl.displayName}"
+               th:classappend="${selectedLevel == lvl} ?
+                   (${lvl.value == 'junior'} ? 'bg-green-600 text-white' :
+                   (${lvl.value == 'middle'} ? 'bg-yellow-500 text-white' : 'bg-red-600 text-white')) :
+                   (${lvl.value == 'junior'} ? 'bg-white text-gray-700 border border-gray-200 hover:border-green-300' :
+                   (${lvl.value == 'middle'} ? 'bg-white text-gray-700 border border-gray-200 hover:border-yellow-300' : 'bg-white text-gray-700 border border-gray-200 hover:border-red-300'))"
+               class="px-4 py-2 rounded-full text-sm font-medium transition-colors">
+            </a>
+        </th:block>
+    </div>
+
+    <div th:if="${questions != null and !questions.isEmpty()}"
+         class="space-y-3">
+        <a th:each="q : ${questions}"
+           th:href="@{/questions/{slug}(slug=${q.slug})}"
+           class="block bg-white rounded-xl p-5 shadow-sm border border-gray-100 hover:shadow-md hover:border-indigo-200 transition-all group">
+            <div class="flex items-start justify-between gap-4">
+                <div class="flex-1 min-w-0">
+                    <h3 class="text-base font-semibold text-gray-900 group-hover:text-indigo-600 transition-colors"
+                        th:text="${q.title}">Название вопроса</h3>
+                    <div th:if="${q.tags != null and !q.tags.isEmpty()}"
+                         class="flex flex-wrap gap-1.5 mt-2">
+                        <span th:each="tag : ${q.tags}"
+                              class="inline-block bg-gray-100 text-gray-600 text-xs px-2 py-0.5 rounded-full"
+                              th:text="${tag.name}">тег</span>
+                    </div>
+                </div>
+                <div class="shrink-0">
+                    <span th:text="${q.level.displayName}"
+                          th:classappend="${q.level.value == 'junior'} ? 'bg-green-100 text-green-700' : (${q.level.value == 'middle'} ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700')"
+                          class="text-xs font-medium px-2.5 py-1 rounded-full">уровень</span>
+                </div>
+            </div>
+        </a>
+    </div>
+
+    <div th:if="${questions == null or questions.isEmpty()}"
+         class="text-center py-20">
+        <div class="text-6xl mb-4">📭</div>
+        <h2 class="text-xl font-semibold text-gray-700 mb-2">Здесь пока нет вопросов</h2>
+        <p class="text-gray-500">Вопросы по этой теме появятся здесь скоро.</p>
+    </div>
+
+    <div class="mt-10">
+        <a href="/topics" class="text-indigo-600 hover:underline text-sm">← Назад к темам</a>
+    </div>
+</section>
+<div th:replace="~{fragments/footer :: footer}"></div>
+</body>
+</html>
