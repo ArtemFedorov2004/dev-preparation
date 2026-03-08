@@ -70,16 +70,16 @@ public class QuestionController {
         }
         QuestionDetailDto question = questionOpt.get();
         model.addAttribute("question", question);
-        model.addAttribute("pageTitle", question.getTitle() + PAGE_TITLE_SUFFIX);
+        model.addAttribute("pageTitle", question.title() + PAGE_TITLE_SUFFIX);
 
         if (isAuthenticated()) {
-            Optional<ProgressStatus> progressStatus = apiClient.getQuestionProgress(question.getSlug());
-            boolean bookmarked = apiClient.isBookmarked(question.getSlug());
+            Optional<ProgressStatus> progressStatus = apiClient.getQuestionProgress(question.slug());
+            boolean bookmarked = apiClient.isBookmarked(question.slug());
             model.addAttribute("progressStatus", progressStatus.orElse(null));
             model.addAttribute("bookmarked", bookmarked);
             model.addAttribute("progressStatuses", ProgressStatus.values());
 
-            apiClient.recordView(question.getSlug());
+            apiClient.recordView(question.slug());
         }
 
         return "question-detail";

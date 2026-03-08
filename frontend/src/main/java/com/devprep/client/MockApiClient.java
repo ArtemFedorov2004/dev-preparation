@@ -94,19 +94,19 @@ public class MockApiClient implements ApiClient {
     @Override
     public Optional<TopicWithQuestionsDto> getTopicBySlug(String slug, Level level) {
         return mockTopics.stream()
-                .filter(t -> t.getSlug().equals(slug))
+                .filter(t -> t.slug().equals(slug))
                 .findFirst()
                 .map(topic -> {
                     TopicWithQuestionsDto dto = new TopicWithQuestionsDto();
-                    dto.setId(topic.getId());
-                    dto.setSlug(topic.getSlug());
-                    dto.setName(topic.getName());
-                    dto.setDescription(topic.getDescription());
-                    dto.setIcon(topic.getIcon());
-                    dto.setSortOrder(topic.getSortOrder());
+                    dto.setId(topic.id());
+                    dto.setSlug(topic.slug());
+                    dto.setName(topic.name());
+                    dto.setDescription(topic.description());
+                    dto.setIcon(topic.icon());
+                    dto.setSortOrder(topic.sortOrder());
                     dto.setQuestions(
                             questionsByTopic.getOrDefault(slug, Collections.emptyList()).stream()
-                                    .filter(q -> level == null || level.equals(q.getLevel()))
+                                    .filter(q -> level == null || level.equals(q.level()))
                                     .collect(Collectors.toList()));
                     return dto;
                 });
@@ -120,18 +120,18 @@ public class MockApiClient implements ApiClient {
 
         if (topic != null && !topic.isBlank())
             filtered = filtered.stream()
-                    .filter(q -> q.getTopic() != null && topic.equals(q.getTopic().getSlug()))
+                    .filter(q -> q.topic() != null && topic.equals(q.topic().slug()))
                     .collect(Collectors.toList());
 
         if (tag != null && !tag.isBlank())
             filtered = filtered.stream()
-                    .filter(q -> q.getTags() != null &&
-                            q.getTags().stream().anyMatch(t -> tag.equals(t.getSlug())))
+                    .filter(q -> q.tags() != null &&
+                            q.tags().stream().anyMatch(t -> tag.equals(t.slug())))
                     .collect(Collectors.toList());
 
         if (level != null)
             filtered = filtered.stream()
-                    .filter(q -> level.equals(q.getLevel()))
+                    .filter(q -> level.equals(q.level()))
                     .collect(Collectors.toList());
 
         int total = filtered.size();
@@ -171,10 +171,10 @@ public class MockApiClient implements ApiClient {
                     QuestionDetailDto q = questionsBySlug.get(e.getKey());
                     if (q == null) return null;
                     UserProgressDto dto = new UserProgressDto();
-                    dto.setSlug(q.getSlug());
-                    dto.setTitle(q.getTitle());
-                    dto.setLevel(q.getLevel());
-                    dto.setTopic(q.getTopic());
+                    dto.setSlug(q.slug());
+                    dto.setTitle(q.title());
+                    dto.setLevel(q.level());
+                    dto.setTopic(q.topic());
                     dto.setStatus(e.getValue());
                     dto.setUpdatedAt(progressUpdatedAt.getOrDefault(e.getKey(), Instant.now()));
                     return dto;
@@ -190,16 +190,12 @@ public class MockApiClient implements ApiClient {
 
         for (TopicDto topic : mockTopics) {
             List<QuestionListItemDto> questions =
-                    questionsByTopic.getOrDefault(topic.getSlug(), Collections.emptyList());
+                    questionsByTopic.getOrDefault(topic.slug(), Collections.emptyList());
             if (questions.isEmpty()) continue;
-
-            TopicProgressDto tp = new TopicProgressDto();
-            tp.setTopic(topic);
-            tp.setTotal(questions.size());
 
             int learned = 0, needReview = 0, dontKnow = 0;
             for (QuestionListItemDto q : questions) {
-                ProgressStatus s = progressStore.get(q.getSlug());
+                ProgressStatus s = progressStore.get(q.slug());
                 if (s == null) continue;
                 switch (s) {
                     case LEARNED -> learned++;
@@ -207,10 +203,16 @@ public class MockApiClient implements ApiClient {
                     case DONT_KNOW -> dontKnow++;
                 }
             }
-            tp.setLearned(learned);
-            tp.setNeedReview(needReview);
-            tp.setDontKnow(dontKnow);
-            result.put(topic.getSlug(), tp);
+
+            TopicProgressDto tp = new TopicProgressDto(
+                    topic,
+                    questions.size(),
+                    learned,
+                    needReview,
+                    dontKnow
+            );
+
+            result.put(topic.slug(), tp);
         }
 
         return new ArrayList<>(result.values());
@@ -244,10 +246,10 @@ public class MockApiClient implements ApiClient {
                     QuestionDetailDto q = questionsBySlug.get(e.getKey());
                     if (q == null) return null;
                     BookmarkDto dto = new BookmarkDto();
-                    dto.setSlug(q.getSlug());
-                    dto.setTitle(q.getTitle());
-                    dto.setLevel(q.getLevel());
-                    dto.setTopic(q.getTopic());
+                    dto.setSlug(q.slug());
+                    dto.setTitle(q.title());
+                    dto.setLevel(q.level());
+                    dto.setTopic(q.topic());
                     dto.setBookmarkedAt(bookmarkAddedAt.getOrDefault(e.getKey(), Instant.now()));
                     return dto;
                 })
@@ -278,10 +280,10 @@ public class MockApiClient implements ApiClient {
                     QuestionDetailDto q = questionsBySlug.get(slug);
                     if (q == null) return null;
                     ViewHistoryDto dto = new ViewHistoryDto();
-                    dto.setSlug(q.getSlug());
-                    dto.setTitle(q.getTitle());
-                    dto.setLevel(q.getLevel());
-                    dto.setTopic(q.getTopic());
+                    dto.setSlug(q.slug());
+                    dto.setTitle(q.title());
+                    dto.setLevel(q.level());
+                    dto.setTopic(q.topic());
                     dto.setViewedAt(lastViewedAt.getOrDefault(slug, Instant.now()));
                     return dto;
                 })
@@ -460,31 +462,33 @@ public class MockApiClient implements ApiClient {
     }
 
     private TagDto tag(String slug, String name) {
-        TagDto t = new TagDto();
-        t.setId(idSequence.getAndIncrement());
-        t.setSlug(slug);
-        t.setName(name);
+        TagDto t = new TagDto(
+                idSequence.getAndIncrement(),
+                slug,
+                name
+        );
         return t;
     }
 
     private TopicDto topic(String slug, String name, String description, String icon, int sortOrder) {
-        TopicDto t = new TopicDto();
-        t.setId(idSequence.getAndIncrement());
-        t.setSlug(slug);
-        t.setName(name);
-        t.setDescription(description);
-        t.setIcon(icon);
-        t.setSortOrder(sortOrder);
+        TopicDto t = new TopicDto(
+                idSequence.getAndIncrement(),
+                slug,
+                name,
+                description,
+                icon,
+                sortOrder
+        );
         return t;
     }
 
     private TagDto findTag(String slug) {
-        return mockTags.stream().filter(t -> t.getSlug().equals(slug)).findFirst()
+        return mockTags.stream().filter(t -> t.slug().equals(slug)).findFirst()
                 .orElseThrow(() -> new IllegalArgumentException("Tag not found: " + slug));
     }
 
     private TopicDto findTopic(String slug) {
-        return mockTopics.stream().filter(t -> t.getSlug().equals(slug)).findFirst()
+        return mockTopics.stream().filter(t -> t.slug().equals(slug)).findFirst()
                 .orElseThrow(() -> new IllegalArgumentException("Topic not found: " + slug));
     }
 
@@ -493,27 +497,30 @@ public class MockApiClient implements ApiClient {
         TopicDto topic = findTopic(topicSlug);
         List<TagDto> tags = tagSlugs.stream().map(this::findTag).collect(Collectors.toList());
 
-        QuestionDetailDto detail = new QuestionDetailDto();
-        detail.setId(idSequence.getAndIncrement());
-        detail.setSlug(slug);
-        detail.setTitle(title);
-        detail.setAnswer(answer);
-        detail.setLevel(level);
-        detail.setTopic(topic);
-        detail.setTags(tags);
+        QuestionDetailDto detail = new QuestionDetailDto(
+                idSequence.getAndIncrement(),
+                slug,
+                title,
+                answer,
+                level,
+                topic,
+                tags
+        );
 
         questionsBySlug.put(slug, detail);
         questionsByTopic.computeIfAbsent(topicSlug, k -> new ArrayList<>()).add(toListItem(detail));
     }
 
     private QuestionListItemDto toListItem(QuestionDetailDto d) {
-        QuestionListItemDto item = new QuestionListItemDto();
-        item.setId(d.getId());
-        item.setSlug(d.getSlug());
-        item.setTitle(d.getTitle());
-        item.setLevel(d.getLevel());
-        item.setTopic(d.getTopic());
-        item.setTags(d.getTags());
+        QuestionListItemDto item = new QuestionListItemDto(
+                d.id(),
+                d.slug(),
+                d.title(),
+                d.level(),
+                d.topic(),
+                d.tags()
+        );
+
         return item;
     }
 }

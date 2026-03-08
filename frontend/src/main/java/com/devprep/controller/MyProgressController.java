@@ -39,7 +39,7 @@ public class MyProgressController {
     public String updateProgress(
             @PathVariable String slug,
             UpdateProgressRequest request) {
-        ProgressStatus status = ProgressStatus.fromValue(request.getStatus());
+        ProgressStatus status = ProgressStatus.fromValue(request.status());
         apiClient.updateProgress(slug, status);
         return "redirect:/questions/%s".formatted(slug);
     }
