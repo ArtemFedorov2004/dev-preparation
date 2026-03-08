@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en"
+      xmlns:th="http://www.thymeleaf.org">
+<div th:replace="~{fragments/head :: head}"></div>
+<body>
+<div th:replace="~{fragments/navbar :: navigation}"></div>
+<section class="max-w-4xl mx-auto px-4 py-10">
+    <div class="mb-8 flex items-center justify-between gap-4 flex-wrap">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900">🕐 История просмотров</h1>
+            <p class="text-gray-500 mt-1">Вопросы, которые вы недавно открывали</p>
+        </div>
+    </div>
+
+    <div th:if="${history != null and !history.isEmpty()}"
+         class="space-y-2">
+        <a th:each="h : ${history}"
+           th:href="@{/questions/{slug}(slug=${h.slug})}"
+           class="flex items-center justify-between gap-4 bg-white rounded-xl px-5 py-4 shadow-sm border border-gray-100 hover:shadow-md hover:border-indigo-200 transition-all group">
+
+            <div class="flex-1 min-w-0">
+                <div class="text-sm font-semibold text-gray-900 group-hover:text-indigo-600 transition-colors truncate"
+                     th:text="${h.title}">Вопрос
+                </div>
+                <div class="flex items-center gap-2 mt-1">
+                    <span th:if="${h.topic != null}" class="text-xs text-gray-400">
+                        <span th:text="${h.topic.icon ?: '📋'}"></span>
+                        <span th:text="${h.topic.name}"></span>
+                    </span>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-3 shrink-0">
+                <span th:text="${h.level.displayName}"
+                      th:classappend="${h.level.value == 'junior'} ? 'bg-green-100 text-green-700' :
+                                      (${h.level.value == 'middle'} ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700')"
+                      class="text-xs font-medium px-2.5 py-0.5 rounded-full">уровень</span>
+                <svg class="w-4 h-4 text-gray-300 group-hover:text-indigo-400 transition-colors" fill="none"
+                     stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                </svg>
+            </div>
+        </a>
+    </div>
+    <div th:if="${history == null or history.isEmpty()}"
+         class="text-center py-20">
+        <div class="text-6xl mb-4">🕐</div>
+        <h2 class="text-xl font-semibold text-gray-700 mb-2">История пуста</h2>
+        <p class="text-gray-500 mb-6">Здесь будут появляться вопросы, которые вы открывали.</p>
+        <a href="/questions"
+           class="inline-block bg-indigo-600 text-white font-semibold px-6 py-3 rounded-lg hover:bg-indigo-700 transition-colors">
+            Перейти к вопросам →
+        </a>
+    </div>
+</section>
+<div th:replace="~{fragments/footer :: footer}"></div>
+</body>
+</html>

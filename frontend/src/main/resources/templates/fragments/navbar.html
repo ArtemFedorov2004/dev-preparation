@@ -1,31 +1,44 @@
 <nav class="bg-white shadow-sm border-b border-gray-200" th:fragment="navigation">
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-    <div class="flex justify-between h-16 items-center">
-      <a href="/" class="flex items-center gap-2 text-xl font-bold text-indigo-600">
-        📚 DevPrep
-      </a>
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between h-16 items-center">
+            <a href="/" class="flex items-center gap-2 text-xl font-bold text-indigo-600">
+                📚 DevPrep
+            </a>
 
-      <div class="hidden md:flex items-center gap-6 text-sm font-medium text-gray-600">
-        <a href="/topics" class="hover:text-indigo-600 transition-colors">Темы</a>
-        <a href="/questions" class="hover:text-indigo-600 transition-colors">Вопросы</a>
-      </div>
+            <div class="hidden md:flex items-center gap-6 text-sm font-medium text-gray-600">
+                <a href="/topics" class="hover:text-indigo-600 transition-colors">Темы</a>
+                <a href="/questions" class="hover:text-indigo-600 transition-colors">Вопросы</a>
 
-      <div class="flex items-center gap-3">
-        <div sec:authorize="isAuthenticated()">
-                    <span class="text-sm text-gray-600 mr-2"
-                          sec:authentication="name">Пользователь</span>
-          <a href="/logout"
-             class="text-sm bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1.5 rounded-md transition-colors">
-            Выйти
-          </a>
+                <div sec:authorize="isAuthenticated()" class="flex items-center gap-6">
+                    <a href="/me/progress" class="hover:text-indigo-600 transition-colors">Прогресс</a>
+                    <a href="/me/bookmarks" class="hover:text-indigo-600 transition-colors">Закладки</a>
+                    <a href="/me/history" class="hover:text-indigo-600 transition-colors">История</a>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-3">
+                <div sec:authorize="isAuthenticated()" class="flex items-center gap-2">
+          <span class="hidden sm:inline text-sm text-gray-500"
+                sec:authentication="name">Пользователь</span>
+                    <div class="md:hidden flex items-center gap-2">
+                        <a href="/me/progress"
+                           class="text-sm text-gray-600 hover:text-indigo-600 px-2 py-1 rounded transition-colors">📊</a>
+                        <a href="/me/bookmarks"
+                           class="text-sm text-gray-600 hover:text-amber-600 px-2 py-1 rounded transition-colors">🔖</a>
+                    </div>
+                    <a href="/logout"
+                       class="text-sm bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1.5 rounded-md transition-colors">
+                        Выйти
+                    </a>
+                </div>
+
+                <div sec:authorize="isAnonymous()">
+                    <a href="/oauth2/authorization/keycloak"
+                       class="text-sm bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md transition-colors">
+                        Войти
+                    </a>
+                </div>
+            </div>
         </div>
-        <div sec:authorize="isAnonymous()">
-          <a href="/oauth2/authorization/keycloak"
-             class="text-sm bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md transition-colors">
-            Войти
-          </a>
-        </div>
-      </div>
     </div>
-  </div>
 </nav>

@@ -16,4 +16,22 @@ public interface ApiClient {
     Optional<QuestionDetailDto> getQuestionBySlug(String slug);
 
     List<TagDto> getTags();
+
+    void updateProgress(String slug, ProgressStatus status);
+
+    List<UserProgressDto> getMyProgress();
+
+    List<TopicProgressDto> getMyProgressByTopic();
+
+    Optional<ProgressStatus> getQuestionProgress(String slug);
+
+    boolean toggleBookmark(String slug);
+
+    List<BookmarkDto> getMyBookmarks();
+
+    boolean isBookmarked(String slug);
+
+    void recordView(String slug);
+
+    List<ViewHistoryDto> getMyHistory();
 }

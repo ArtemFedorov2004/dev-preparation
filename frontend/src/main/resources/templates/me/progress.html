@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<div th:replace="~{fragments/head :: head}"></div>
+<body>
+<div th:replace="~{fragments/navbar :: navigation}"></div>
+
+<section class="max-w-5xl mx-auto px-4 py-10">
+    <div class="mb-8 flex items-center justify-between gap-4 flex-wrap">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900">📊 Мой прогресс</h1>
+            <p class="text-gray-500 mt-1">
+                Привет, <strong sec:authentication="name">пользователь</strong>! Вот как идёт подготовка.
+            </p>
+        </div>
+    </div>
+
+    <div th:if="${progressByTopic != null and !progressByTopic.isEmpty()}"
+         class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-8">
+        <h2 class="text-lg font-semibold text-gray-800 mb-5">Общий прогресс по темам</h2>
+
+        <div class="space-y-4">
+            <div th:each="tp : ${progressByTopic}">
+                <div class="flex items-center justify-between mb-1.5">
+                    <div class="flex items-center gap-2 text-sm font-medium text-gray-700">
+                        <span th:text="${tp.topic.icon ?: '📋'}">📋</span>
+                        <a th:href="@{/topics/{slug}(slug=${tp.topic.slug})}"
+                           class="hover:text-indigo-600 transition-colors"
+                           th:text="${tp.topic.name}">Тема</a>
+                    </div>
+                    <span class="text-xs text-gray-500">
+                        <span th:text="${tp.learned}">0</span> /
+                        <span th:text="${tp.total}">0</span>
+                    </span>
+                </div>
+                <div class="w-full bg-gray-100 rounded-full h-2.5 overflow-hidden flex">
+                    <div class="h-2.5 bg-green-500 transition-all"
+                         th:style="'width: ' + ${tp.total > 0 ? #numbers.formatDecimal(tp.learned * 100.0 / tp.total, 1, 0) : 0} + '%'"></div>
+                    <div class="h-2.5 bg-yellow-400 transition-all"
+                         th:style="'width: ' + ${tp.total > 0 ? #numbers.formatDecimal(tp.needReview * 100.0 / tp.total, 1, 0) : 0} + '%'"></div>
+                    <div class="h-2.5 bg-red-400 transition-all"
+                         th:style="'width: ' + ${tp.total > 0 ? #numbers.formatDecimal(tp.dontKnow * 100.0 / tp.total, 1, 0) : 0} + '%'"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="flex gap-6 mt-3 text-xs text-gray-500">
+            <span>
+                <span class="inline-block w-2.5 h-2.5 rounded-full bg-green-500 mr-1"></span>
+                Изучено
+            </span>
+            <span>
+                <span class="inline-block w-2.5 h-2.5 rounded-full bg-yellow-400 mr-1"></span>
+                Повторить
+            </span>
+            <span>
+                <span class="inline-block w-2.5 h-2.5 rounded-full bg-red-400 mr-1"></span>
+                Не знаю
+            </span>
+            <span>
+                <span class="inline-block w-2.5 h-2.5 rounded-full bg-gray-300 mr-1"></span>
+                Не начато
+            </span>
+        </div>
+    </div>
+
+    <div th:if="${progressList != null and !progressList.isEmpty()}"
+         class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <h2 class="text-lg font-semibold text-gray-800 mb-4">Последние обновления</h2>
+
+        <div class="space-y-2">
+            <a th:each="p : ${progressList}"
+               th:href="@{/questions/{slug}(slug=${p.slug})}"
+               class="flex items-center justify-between gap-4 rounded-lg px-4 py-3 hover:bg-gray-50 transition-colors group">
+                <div class="flex-1 min-w-0">
+                    <div class="text-sm font-medium text-gray-800 group-hover:text-indigo-600 truncate"
+                         th:text="${p.title}">Вопрос</div>
+                    <div class="text-xs text-gray-400 mt-0.5" th:if="${p.topic != null}">
+                        <span th:text="${p.topic.icon ?: '📋'}"></span>
+                        <span th:text="${p.topic.name}"></span>
+                    </div>
+                </div>
+                <div class="flex items-center gap-3 shrink-0">
+                    <span th:text="${p.status.displayName}"
+                          th:classappend="${p.status.badgeClass}"
+                          class="text-xs font-semibold px-2.5 py-0.5 rounded-full">Статус</span>
+                </div>
+            </a>
+        </div>
+    </div>
+
+    <div th:if="${progressList == null or progressList.isEmpty()}"
+         class="text-center py-20">
+        <div class="text-6xl mb-4">🌱</div>
+        <h2 class="text-xl font-semibold text-gray-700 mb-2">Начните изучение!</h2>
+        <p class="text-gray-500 mb-6">Откройте любой вопрос и отметьте его статус — прогресс появится здесь.</p>
+        <a href="/questions"
+           class="inline-block bg-indigo-600 text-white font-semibold px-6 py-3 rounded-lg hover:bg-indigo-700 transition-colors">
+            Перейти к вопросам →
+        </a>
+    </div>
+</section>
+<div th:replace="~{fragments/footer :: footer}"></div>
+</body>
+</html>

@@ -4,13 +4,14 @@ import com.devprep.client.dto.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.MediaType;
 import org.springframework.web.client.HttpClientErrorException;
-import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Slf4j
@@ -25,6 +26,26 @@ public class DefaultApiClient implements ApiClient {
             new ParameterizedTypeReference<>() {
             };
 
+    private static final ParameterizedTypeReference<List<UserProgressDto>> PROGRESS_LIST_TYPE_REFERENCE =
+            new ParameterizedTypeReference<>() {
+            };
+
+    private static final ParameterizedTypeReference<List<TopicProgressDto>> TOPIC_PROGRESS_TYPE_REFERENCE =
+            new ParameterizedTypeReference<>() {
+            };
+
+    private static final ParameterizedTypeReference<List<BookmarkDto>> BOOKMARKS_TYPE_REFERENCE =
+            new ParameterizedTypeReference<>() {
+            };
+
+    private static final ParameterizedTypeReference<List<ViewHistoryDto>> HISTORY_TYPE_REFERENCE =
+            new ParameterizedTypeReference<>() {
+            };
+
+    private static final ParameterizedTypeReference<Map<String, Object>> MAP_TYPE_REFERENCE =
+            new ParameterizedTypeReference<>() {
+            };
+
     private final RestClient restClient;
 
     @Override
@@ -34,7 +55,7 @@ public class DefaultApiClient implements ApiClient {
                     .uri("/api/v1/topics")
                     .retrieve()
                     .body(TOPICS_TYPE_REFERENCE);
-        } catch (ResourceAccessException e) {
+        } catch (Exception e) {
             log.error("Failed to fetch topics: {}", e.getMessage(), e.getCause());
             return Collections.emptyList();
         }
@@ -53,7 +74,7 @@ public class DefaultApiClient implements ApiClient {
                     .body(TopicWithQuestionsDto.class));
         } catch (HttpClientErrorException.NotFound exception) {
             return Optional.empty();
-        } catch (ResourceAccessException e) {
+        } catch (Exception e) {
             log.error("Error calling GET /api/v1/topics/{}", slug, e);
             return Optional.empty();
         }
@@ -76,7 +97,7 @@ public class DefaultApiClient implements ApiClient {
                     .retrieve()
                     .body(PaginatedQuestionsDto.class);
             return result != null ? result : emptyPaginated(page, limit);
-        } catch (ResourceAccessException e) {
+        } catch (Exception e) {
             log.error("Error calling GET /api/v1/questions", e);
             return emptyPaginated(page, limit);
         }
@@ -91,7 +112,7 @@ public class DefaultApiClient implements ApiClient {
                     .body(QuestionDetailDto.class));
         } catch (HttpClientErrorException.NotFound exception) {
             return Optional.empty();
-        } catch (ResourceAccessException e) {
+        } catch (Exception e) {
             log.error("Error calling GET /api/v1/questions/{}", slug, e);
             return Optional.empty();
         }
@@ -104,8 +125,143 @@ public class DefaultApiClient implements ApiClient {
                     .uri("/api/v1/tags")
                     .retrieve()
                     .body(TAGS_TYPE_REFERENCE);
-        } catch (ResourceAccessException e) {
+        } catch (Exception e) {
             log.error("Error calling GET /api/v1/tags", e);
+            return Collections.emptyList();
+        }
+    }
+
+    @Override
+    public void updateProgress(String slug, ProgressStatus status) {
+        try {
+            restClient.post()
+                    .uri("/api/v1/questions/{slug}/progress", slug)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(new UpdateProgressRequest(status.getValue()))
+                    .retrieve()
+                    .toBodilessEntity();
+        } catch (HttpClientErrorException.NotFound e) {
+            log.warn("Question not found when updating progress: slug={}", slug);
+        } catch (Exception e) {
+            log.error("Error POST /api/v1/questions/{}/progress", slug, e);
+        }
+    }
+
+    @Override
+    public List<UserProgressDto> getMyProgress() {
+        try {
+            List<UserProgressDto> result = restClient.get()
+                    .uri("/api/v1/me/progress")
+                    .retrieve()
+                    .body(PROGRESS_LIST_TYPE_REFERENCE);
+            return result != null ? result : Collections.emptyList();
+        } catch (Exception e) {
+            log.error("Error GET /api/v1/me/progress", e);
+            return Collections.emptyList();
+        }
+    }
+
+    @Override
+    public List<TopicProgressDto> getMyProgressByTopic() {
+        try {
+            List<TopicProgressDto> result = restClient.get()
+                    .uri("/api/v1/me/progress/by-topic")
+                    .retrieve()
+                    .body(TOPIC_PROGRESS_TYPE_REFERENCE);
+            return result != null ? result : Collections.emptyList();
+        } catch (Exception e) {
+            log.error("Error GET /api/v1/me/progress/by-topic", e);
+            return Collections.emptyList();
+        }
+    }
+
+    @Override
+    public Optional<ProgressStatus> getQuestionProgress(String slug) {
+        try {
+            UserProgressDto dto = restClient.get()
+                    .uri("/api/v1/questions/{slug}/progress", slug)
+                    .retrieve()
+                    .body(UserProgressDto.class);
+            return Optional.ofNullable(dto).map(UserProgressDto::getStatus);
+        } catch (HttpClientErrorException.NotFound e) {
+            return Optional.empty();
+        } catch (Exception e) {
+            log.error("Error GET /api/v1/questions/{}/progress", slug, e);
+            return Optional.empty();
+        }
+    }
+
+    @Override
+    public boolean toggleBookmark(String slug) {
+        try {
+            Map<String, Object> response = restClient.post()
+                    .uri("/api/v1/questions/{slug}/bookmark", slug)
+                    .retrieve()
+                    .body(MAP_TYPE_REFERENCE);
+            return response != null && Boolean.TRUE.equals(response.get("bookmarked"));
+        } catch (HttpClientErrorException.NotFound e) {
+            log.warn("Question not found when toggling bookmark: slug={}", slug);
+            return false;
+        } catch (Exception e) {
+            log.error("Error POST /api/v1/questions/{}/bookmark", slug, e);
+            return false;
+        }
+    }
+
+    @Override
+    public List<BookmarkDto> getMyBookmarks() {
+        try {
+            List<BookmarkDto> result = restClient.get()
+                    .uri("/api/v1/me/bookmarks")
+                    .retrieve()
+                    .body(BOOKMARKS_TYPE_REFERENCE);
+            return result != null ? result : Collections.emptyList();
+        } catch (Exception e) {
+            log.error("Error GET /api/v1/me/bookmarks", e);
+            return Collections.emptyList();
+        }
+    }
+
+    @Override
+    public boolean isBookmarked(String slug) {
+        try {
+            Map<String, Object> response = restClient.get()
+                    .uri("/api/v1/questions/{slug}/bookmark", slug)
+                    .retrieve()
+                    .body(MAP_TYPE_REFERENCE);
+            return response != null && Boolean.TRUE.equals(response.get("bookmarked"));
+        } catch (HttpClientErrorException.NotFound e) {
+            return false;
+        } catch (Exception e) {
+            log.error("Error GET /api/v1/questions/{}/bookmark", slug, e);
+            return false;
+        }
+    }
+
+    @Override
+    public void recordView(String slug) {
+        try {
+            restClient.post()
+                    .uri("/api/v1/questions/{slug}/view", slug)
+                    .retrieve()
+                    .toBodilessEntity();
+        } catch (HttpClientErrorException.NotFound e) {
+            log.warn("Question not found when recording view: slug={}", slug);
+        } catch (Exception e) {
+            log.warn("Error POST /api/v1/questions/{}/view: {}", slug, e.getMessage());
+        }
+    }
+
+    @Override
+    public List<ViewHistoryDto> getMyHistory() {
+        try {
+            List<ViewHistoryDto> result = restClient.get()
+                    .uri("/api/v1/me/history")
+                    .retrieve()
+                    .body(HISTORY_TYPE_REFERENCE);
+            return result != null ? result : Collections.emptyList();
+        } catch (Exception e) {
+            log.error("Error GET /api/v1/me/history", e);
             return Collections.emptyList();
         }
     }

@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en"
-      xmlns:th="http://www.thymeleaf.org">
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <link rel="stylesheet"
           href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css">
@@ -27,7 +28,8 @@
     <div class="mb-6">
         <div class="flex flex-wrap items-center gap-3 mb-3">
             <span th:text="${question.level.displayName}"
-                  th:classappend="${question.level.value == 'junior'} ? 'bg-green-100 text-green-700' : (${question.level.value == 'middle'} ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700')"
+                  th:classappend="${question.level.value == 'junior'} ? 'bg-green-100 text-green-700' :
+                                  (${question.level.value == 'middle'} ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700')"
                   class="text-xs font-semibold px-3 py-1 rounded-full">уровень</span>
             <a th:if="${question.topic != null}"
                th:href="@{/topics/{slug}(slug=${question.topic.slug})}"
@@ -38,6 +40,57 @@
                   th:text="${tag.name}">тег</span>
         </div>
         <h1 class="text-2xl font-bold text-gray-900 leading-snug" th:text="${question.title}">Название вопроса</h1>
+    </div>
+
+    <div sec:authorize="isAuthenticated()"
+         class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-6 flex flex-wrap items-center gap-4">
+
+        <div class="flex items-center gap-2 flex-1 min-w-0">
+            <span class="text-sm font-medium text-gray-600 shrink-0">Статус:</span>
+            <span id="progress-badge"
+                  th:classappend="${progressStatus != null} ? ${progressStatus.badgeClass} : 'bg-gray-100 text-gray-500'"
+                  class="text-xs font-semibold px-3 py-1 rounded-full transition-all">
+                <span th:text="${progressStatus != null} ? ${progressStatus.displayName} : 'Не начато'">Не начато</span>
+            </span>
+        </div>
+
+        <div class="flex flex-wrap gap-2">
+            <form method="post" th:each="s : ${progressStatuses}"
+                  data-th-action="@{/me/questions/{slug}/progress(slug=${question.slug})}">
+                <input type="hidden"
+                       name="status"
+                       th:value="${s.value}"/>
+                <button
+                        type="submit"
+                        th:classappend="${progressStatus == s} ? 'ring-2 ring-offset-1 ' + ${s.badgeClass} : 'bg-gray-50 hover:bg-gray-100 text-gray-700'"
+                        class="progress-btn text-xs font-medium px-3 py-1.5 rounded-lg border border-gray-200 transition-all cursor-pointer"
+                        th:text="${s.displayName}">Статус
+                </button>
+            </form>
+
+        </div>
+
+        <div class="hidden sm:block w-px h-6 bg-gray-200"></div>
+
+        <form method="post" data-th-action="@{/me/questions/{slug}/bookmark(slug=${question.slug})}">
+            <button id="bookmark-btn"
+                    type="submit"
+                    class="flex items-center gap-1.5 text-sm font-medium px-3 py-1.5 rounded-lg border transition-all cursor-pointer"
+                    th:classappend="${bookmarked} ? 'bg-amber-50 border-amber-300 text-amber-700 hover:bg-amber-100' :
+                                               'bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100'">
+                <span id="bookmark-icon" th:text="${bookmarked} ? '🔖' : '☆'">☆</span>
+                <span id="bookmark-label" th:text="${bookmarked} ? 'В закладках' : 'Добавить в закладки'">Добавить в закладки</span>
+            </button>
+        </form>
+    </div>
+
+    <div sec:authorize="isAnonymous()"
+         class="bg-indigo-50 border border-indigo-100 rounded-xl p-4 mb-6 flex items-center gap-3 text-sm text-indigo-700">
+        <span class="text-xl">🔒</span>
+        <span>
+            <a href="/oauth2/authorization/keycloak" class="font-semibold underline hover:text-indigo-900">Войдите</a>,
+            чтобы отслеживать прогресс и сохранять закладки.
+        </span>
     </div>
 
     <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
@@ -52,9 +105,8 @@
     </div>
 
     <div class="flex flex-wrap gap-4 mt-8 pt-6 border-t border-gray-100">
-        <a
-                th:href="@{/topics/{slug}(slug=${question.topic.slug})}"
-                class="text-sm text-indigo-600 hover:underline flex items-center gap-1">
+        <a th:href="@{/topics/{slug}(slug=${question.topic.slug})}"
+           class="text-sm text-indigo-600 hover:underline flex items-center gap-1">
             ← Назад к <span th:text="${question.topic.name}">теме</span>
         </a>
         <a href="/questions"
@@ -63,7 +115,6 @@
         </a>
     </div>
 </section>
-
 <div th:replace="~{fragments/footer :: footer}"></div>
 <th:block>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
@@ -76,7 +127,6 @@
                 answerEl.innerHTML = marked.parse(raw);
                 answerEl.classList.remove('hidden');
             }
-
             document.querySelectorAll('pre code').forEach(function (block) {
                 hljs.highlightElement(block);
             });

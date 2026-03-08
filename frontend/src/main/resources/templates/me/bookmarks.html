@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en"
+      xmlns:th="http://www.thymeleaf.org">
+<div th:replace="~{fragments/head :: head}"></div>
+<body>
+<div th:replace="~{fragments/navbar :: navigation}"></div>
+
+<section class="max-w-4xl mx-auto px-4 py-10">
+    <div class="mb-8 flex items-center justify-between gap-4 flex-wrap">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900">🔖 Закладки</h1>
+            <p class="text-gray-500 mt-1">Сохранённые вопросы для быстрого доступа</p>
+        </div>
+    </div>
+
+    <div th:if="${bookmarks != null and !bookmarks.isEmpty()}"
+         class="text-sm text-gray-500 mb-4">
+        <span class="font-medium text-gray-900" th:text="${bookmarks.size()}">0</span> закладок
+    </div>
+
+    <div th:if="${bookmarks != null and !bookmarks.isEmpty()}"
+         class="space-y-3">
+        <div th:each="b : ${bookmarks}"
+             class="bg-white rounded-xl p-5 shadow-sm border border-gray-100 hover:shadow-md hover:border-amber-200 transition-all group flex items-start justify-between gap-4">
+
+            <a th:href="@{/questions/{slug}(slug=${b.slug})}" class="flex-1 min-w-0">
+                <h3 class="text-base font-semibold text-gray-900 group-hover:text-indigo-600 transition-colors"
+                    th:text="${b.title}">Название вопроса</h3>
+                <div class="flex flex-wrap gap-2 mt-2 items-center">
+                    <span th:if="${b.topic != null}" class="text-xs text-gray-500">
+                        <span th:text="${b.topic.icon ?: '📋'}"></span>
+                        <span th:text="${b.topic.name}"></span>
+                    </span>
+                    <span th:text="${b.level.displayName}"
+                          th:classappend="${b.level.value == 'junior'} ? 'bg-green-100 text-green-700' :
+                                          (${b.level.value == 'middle'} ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700')"
+                          class="text-xs font-medium px-2.5 py-0.5 rounded-full">уровень</span>
+                </div>
+            </a>
+
+            <form method="post" data-th-action="@{/me/bookmarks(slug=${b.slug})}">
+                <button class="remove-bookmark-btn shrink-0 text-gray-300 hover:text-red-400 transition-colors p-1 rounded-lg"
+                        type="submit"
+                        title="Удалить из закладок">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/>
+                    </svg>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div th:if="${bookmarks == null or bookmarks.isEmpty()}"
+         class="text-center py-20">
+        <div class="text-6xl mb-4">🔖</div>
+        <h2 class="text-xl font-semibold text-gray-700 mb-2">Закладок пока нет</h2>
+        <p class="text-gray-500 mb-6">Нажмите «Добавить в закладки» на странице любого вопроса.</p>
+        <a href="/questions"
+           class="inline-block bg-indigo-600 text-white font-semibold px-6 py-3 rounded-lg hover:bg-indigo-700 transition-colors">
+            Перейти к вопросам →
+        </a>
+    </div>
+</section>
+<div th:replace="~{fragments/footer :: footer}"></div>
+</body>
+</html>

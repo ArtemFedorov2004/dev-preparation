@@ -4,6 +4,9 @@ import com.devprep.client.ApiClient;
 import com.devprep.client.dto.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -39,8 +42,7 @@ public class QuestionController {
             try {
                 level = Level.fromValue(levelParam);
             } catch (IllegalArgumentException e) {
-                log.warn("Invalid level parameter '{}'. Using default (null). Error: {}",
-                        levelParam, e.getMessage());
+                log.warn("Invalid level parameter '{}'. Using default (null).", levelParam);
             }
         }
 
@@ -69,6 +71,24 @@ public class QuestionController {
         QuestionDetailDto question = questionOpt.get();
         model.addAttribute("question", question);
         model.addAttribute("pageTitle", question.getTitle() + PAGE_TITLE_SUFFIX);
+
+        if (isAuthenticated()) {
+            Optional<ProgressStatus> progressStatus = apiClient.getQuestionProgress(question.getSlug());
+            boolean bookmarked = apiClient.isBookmarked(question.getSlug());
+            model.addAttribute("progressStatus", progressStatus.orElse(null));
+            model.addAttribute("bookmarked", bookmarked);
+            model.addAttribute("progressStatuses", ProgressStatus.values());
+
+            apiClient.recordView(question.getSlug());
+        }
+
         return "question-detail";
+    }
+
+    private boolean isAuthenticated() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        return auth != null
+                && !(auth instanceof AnonymousAuthenticationToken)
+                && auth.isAuthenticated();
     }
 }
