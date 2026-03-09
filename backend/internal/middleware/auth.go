@@ -44,7 +44,7 @@ func Auth(jwks keyfunc.Keyfunc) func(http.Handler) http.Handler {
 				return
 			}
 
-			ctx := context.WithValue(r.Context(), claimsKey, claims)
+			ctx := handler.ContextWithUserID(r.Context(), claims.Subject)
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}

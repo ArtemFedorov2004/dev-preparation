@@ -7,6 +7,12 @@
 //	@description	REST API для подготовки к техническому интервью.
 //
 //	@BasePath	/api/v1
+//
+//	@securityDefinitions.oauth2.accessCode	KeycloakAuth
+//	@authorizationUrl						http://KEYCLOAK_AUTH_URL
+//	@tokenUrl								http://KEYCLOAK_TOKEN_URL
+//	@scope.openid
+//	@scope.microprofile-jwt
 package main
 
 import (
@@ -16,9 +22,11 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
+	"github.com/devprep/backend/docs"
 	_ "github.com/devprep/backend/docs"
 	"github.com/devprep/backend/internal/config"
 	"github.com/devprep/backend/internal/database"
@@ -46,10 +54,16 @@ func main() {
 		os.Exit(1)
 	}
 
+	oidcBase := cfg.Keycloak.RealmURL() + "/protocol/openid-connect"
+	docs.SwaggerInfo.SwaggerTemplate = strings.NewReplacer(
+		"http://KEYCLOAK_AUTH_URL", oidcBase+"/auth",
+		"http://KEYCLOAK_TOKEN_URL", oidcBase+"/token",
+	).Replace(docs.SwaggerInfo.SwaggerTemplate)
+
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 
-	_, err = keycloak.NewJWKS(ctx, keycloak.Config{
+	jwks, err := keycloak.NewJWKS(ctx, keycloak.Config{
 		RealmURL:        cfg.Keycloak.RealmURL(),
 		RefreshInterval: cfg.Keycloak.RefreshInterval,
 	})
@@ -87,11 +101,15 @@ func main() {
 		slog.Info("redis cache enabled")
 	}
 
+	activityRepo := repository.NewPGUserActivityRepo(pool)
+
 	topicSvc := service.NewTopicService(topicRepo, questionRepo)
 	questionSvc := service.NewQuestionService(questionRepo)
+	activitySvc := service.NewUserActivityService(activityRepo)
 
 	topicHandler := handler.NewTopicHandler(topicSvc)
 	questionHandler := handler.NewQuestionHandler(questionSvc)
+	activityHandler := handler.NewUserActivityHandler(activitySvc)
 
 	r := chi.NewRouter()
 
@@ -101,8 +119,16 @@ func main() {
 	r.Use(middleware.Logger)
 	r.Use(middleware.CORS)
 
+	swaggerOAuthScript := `
+		window.ui.initOAuth({
+				clientId: "swagger-ui",
+				scopes: "openid microprofile-jwt",
+				usePkceWithAuthorizationCodeGrant: true,
+			});`
+
 	r.Get("/swagger/*", httpSwagger.Handler(
 		httpSwagger.URL("/swagger/doc.json"),
+		httpSwagger.AfterScript(swaggerOAuthScript),
 	))
 
 	r.Get("/health", handler.Health)
@@ -115,6 +141,23 @@ func main() {
 		r.Get("/questions/{slug}", questionHandler.GetQuestionBySlug)
 
 		r.Get("/tags", questionHandler.ListTags)
+
+		r.Group(func(r chi.Router) {
+			r.Use(middleware.Auth(jwks))
+
+			r.Post("/questions/{slug}/progress", activityHandler.UpdateProgress)
+			r.Get("/questions/{slug}/progress", activityHandler.GetQuestionProgress)
+
+			r.Post("/questions/{slug}/bookmark", activityHandler.ToggleBookmark)
+			r.Get("/questions/{slug}/bookmark", activityHandler.GetBookmarkStatus)
+
+			r.Post("/questions/{slug}/view", activityHandler.RecordView)
+
+			r.Get("/me/progress", activityHandler.GetMyProgress)
+			r.Get("/me/progress/by-topic", activityHandler.GetMyProgressByTopic)
+			r.Get("/me/bookmarks", activityHandler.GetMyBookmarks)
+			r.Get("/me/history", activityHandler.GetMyHistory)
+		})
 	})
 
 	addr := fmt.Sprintf(":%d", cfg.Server.Port)

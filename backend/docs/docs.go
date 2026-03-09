@@ -15,6 +15,142 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/me/bookmarks": {
+            "get": {
+                "security": [
+                    {
+                        "KeycloakAuth": []
+                    }
+                ],
+                "description": "Возвращает все вопросы, добавленные пользователем в закладки",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "bookmarks"
+                ],
+                "summary": "Список закладок",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/github_com_devprep_backend_internal_model.Bookmark"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handler.errorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/me/history": {
+            "get": {
+                "security": [
+                    {
+                        "KeycloakAuth": []
+                    }
+                ],
+                "description": "Возвращает просмотренные вопросы, отсортированные по времени",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "history"
+                ],
+                "summary": "История просмотров",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/github_com_devprep_backend_internal_model.ViewHistory"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handler.errorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/me/progress": {
+            "get": {
+                "security": [
+                    {
+                        "KeycloakAuth": []
+                    }
+                ],
+                "description": "Возвращает список всех вопросов со статусами изучения",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "progress"
+                ],
+                "summary": "Весь прогресс пользователя",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/github_com_devprep_backend_internal_model.UserProgress"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handler.errorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/me/progress/by-topic": {
+            "get": {
+                "security": [
+                    {
+                        "KeycloakAuth": []
+                    }
+                ],
+                "description": "Возвращает количество изученных, требующих повторения и незнакомых вопросов по каждой теме",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "progress"
+                ],
+                "summary": "Агрегированный прогресс по темам",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/github_com_devprep_backend_internal_model.TopicProgress"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handler.errorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/questions": {
             "get": {
                 "description": "Возвращает вопросы с фильтрацией по теме, тегу и уровню сложности",
@@ -101,6 +237,241 @@ const docTemplate = `{
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/github_com_devprep_backend_internal_model.QuestionDetail"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handler.errorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/questions/{slug}/bookmark": {
+            "get": {
+                "security": [
+                    {
+                        "KeycloakAuth": []
+                    }
+                ],
+                "description": "Проверяет, добавлен ли вопрос в закладки текущим пользователем",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "bookmarks"
+                ],
+                "summary": "Статус закладки",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Slug вопроса",
+                        "name": "slug",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handler.bookmarkStatusResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handler.errorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handler.errorResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "KeycloakAuth": []
+                    }
+                ],
+                "description": "Если закладки нет — создаёт, если есть — удаляет. Возвращает итоговый статус.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "bookmarks"
+                ],
+                "summary": "Добавить / убрать закладку",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Slug вопроса",
+                        "name": "slug",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handler.bookmarkStatusResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handler.errorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handler.errorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/questions/{slug}/progress": {
+            "get": {
+                "security": [
+                    {
+                        "KeycloakAuth": []
+                    }
+                ],
+                "description": "Возвращает статус изучения вопроса текущим пользователем",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "progress"
+                ],
+                "summary": "Прогресс по конкретному вопросу",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Slug вопроса",
+                        "name": "slug",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_devprep_backend_internal_model.UserProgress"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handler.errorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handler.errorResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "KeycloakAuth": []
+                    }
+                ],
+                "description": "Устанавливает статус изучения для вопроса",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "progress"
+                ],
+                "summary": "Обновить статус изучения вопроса",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Slug вопроса",
+                        "name": "slug",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Статус",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_handler.updateProgressRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handler.errorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handler.errorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handler.errorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/questions/{slug}/view": {
+            "post": {
+                "security": [
+                    {
+                        "KeycloakAuth": []
+                    }
+                ],
+                "description": "Фиксирует факт просмотра вопроса.",
+                "tags": [
+                    "history"
+                ],
+                "summary": "Записать просмотр вопроса",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Slug вопроса",
+                        "name": "slug",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handler.errorResponse"
                         }
                     },
                     "404": {
@@ -207,6 +578,29 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "github_com_devprep_backend_internal_model.Bookmark": {
+            "type": "object",
+            "properties": {
+                "bookmarked_at": {
+                    "type": "string"
+                },
+                "level": {
+                    "$ref": "#/definitions/github_com_devprep_backend_internal_model.Level"
+                },
+                "question_id": {
+                    "type": "integer"
+                },
+                "slug": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
+                },
+                "topic": {
+                    "$ref": "#/definitions/github_com_devprep_backend_internal_model.Topic"
+                }
+            }
+        },
         "github_com_devprep_backend_internal_model.Level": {
             "type": "string",
             "enum": [
@@ -247,6 +641,19 @@ const docTemplate = `{
                     "type": "integer"
                 }
             }
+        },
+        "github_com_devprep_backend_internal_model.ProgressStatus": {
+            "type": "string",
+            "enum": [
+                "learned",
+                "need_review",
+                "dont_know"
+            ],
+            "x-enum-varnames": [
+                "StatusLearned",
+                "StatusNeedReview",
+                "StatusDontKnow"
+            ]
         },
         "github_com_devprep_backend_internal_model.QuestionDetail": {
             "type": "object",
@@ -343,6 +750,26 @@ const docTemplate = `{
                 }
             }
         },
+        "github_com_devprep_backend_internal_model.TopicProgress": {
+            "type": "object",
+            "properties": {
+                "dont_know": {
+                    "type": "integer"
+                },
+                "learned": {
+                    "type": "integer"
+                },
+                "need_review": {
+                    "type": "integer"
+                },
+                "topic": {
+                    "$ref": "#/definitions/github_com_devprep_backend_internal_model.Topic"
+                },
+                "total": {
+                    "type": "integer"
+                }
+            }
+        },
         "github_com_devprep_backend_internal_model.TopicWithQuestions": {
             "type": "object",
             "properties": {
@@ -372,6 +799,63 @@ const docTemplate = `{
                 }
             }
         },
+        "github_com_devprep_backend_internal_model.UserProgress": {
+            "type": "object",
+            "properties": {
+                "level": {
+                    "$ref": "#/definitions/github_com_devprep_backend_internal_model.Level"
+                },
+                "question_id": {
+                    "type": "integer"
+                },
+                "slug": {
+                    "type": "string"
+                },
+                "status": {
+                    "$ref": "#/definitions/github_com_devprep_backend_internal_model.ProgressStatus"
+                },
+                "title": {
+                    "type": "string"
+                },
+                "topic": {
+                    "$ref": "#/definitions/github_com_devprep_backend_internal_model.Topic"
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_devprep_backend_internal_model.ViewHistory": {
+            "type": "object",
+            "properties": {
+                "level": {
+                    "$ref": "#/definitions/github_com_devprep_backend_internal_model.Level"
+                },
+                "question_id": {
+                    "type": "integer"
+                },
+                "slug": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
+                },
+                "topic": {
+                    "$ref": "#/definitions/github_com_devprep_backend_internal_model.Topic"
+                },
+                "viewed_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_handler.bookmarkStatusResponse": {
+            "type": "object",
+            "properties": {
+                "bookmarked": {
+                    "type": "boolean"
+                }
+            }
+        },
         "internal_handler.errorResponse": {
             "type": "object",
             "properties": {
@@ -385,6 +869,26 @@ const docTemplate = `{
                 "request_id": {
                     "type": "string"
                 }
+            }
+        },
+        "internal_handler.updateProgressRequest": {
+            "type": "object",
+            "properties": {
+                "status": {
+                    "type": "string"
+                }
+            }
+        }
+    },
+    "securityDefinitions": {
+        "KeycloakAuth": {
+            "type": "oauth2",
+            "flow": "accessCode",
+            "authorizationUrl": "http://KEYCLOAK_AUTH_URL",
+            "tokenUrl": "http://KEYCLOAK_TOKEN_URL",
+            "scopes": {
+                "microprofile-jwt": "",
+                "openid": ""
             }
         }
     }

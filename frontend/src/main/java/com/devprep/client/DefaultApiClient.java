@@ -178,11 +178,11 @@ public class DefaultApiClient implements ApiClient {
     @Override
     public Optional<ProgressStatus> getQuestionProgress(String slug) {
         try {
-            UserProgressDto dto = restClient.get()
+            ProgressStatus status = restClient.get()
                     .uri("/api/v1/questions/{slug}/progress", slug)
                     .retrieve()
-                    .body(UserProgressDto.class);
-            return Optional.ofNullable(dto).map(UserProgressDto::getStatus);
+                    .body(ProgressStatus.class);
+            return Optional.ofNullable(status);
         } catch (HttpClientErrorException.NotFound e) {
             return Optional.empty();
         } catch (Exception e) {

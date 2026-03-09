@@ -2,6 +2,7 @@ package com.devprep.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.web.SecurityFilterChain;
@@ -18,10 +19,7 @@ public class SecurityConfig {
                         .requestMatchers("/css/**", "/js/**", "/images/**", "/favicon.ico").permitAll()
                         .anyRequest().authenticated()
                 )
-                .oauth2Login(oauth2 -> oauth2
-                        .defaultSuccessUrl("/", true)
-                        .failureUrl("/login?error")
-                )
+                .oauth2Login(Customizer.withDefaults())
                 .logout(logout -> logout
                         .logoutSuccessUrl("/")
                         .invalidateHttpSession(true)
