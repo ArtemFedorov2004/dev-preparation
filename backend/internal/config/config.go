@@ -14,6 +14,7 @@ type Config struct {
 	Database DatabaseConfig
 	Keycloak KeycloakConfig
 	Redis    RedisConfig
+	Swagger  SwaggerConfig
 }
 
 type ServerConfig struct {
@@ -49,6 +50,11 @@ type RedisConfig struct {
 	QuestionTTL time.Duration
 }
 
+type SwaggerConfig struct {
+	OAuth2AuthorizationUrl string
+	OAuth2TokenUrl         string
+}
+
 func (c KeycloakConfig) RealmURL() string {
 	return fmt.Sprintf("%s/realms/%s",
 		c.URL, c.Realm,
@@ -64,6 +70,14 @@ func (c DatabaseConfig) DSN() string {
 
 func Load() (*Config, error) {
 	_ = godotenv.Load()
+
+	keycloak := KeycloakConfig{
+		URL:             getEnvStr("KEYCLOAK_URL", "http://localhost:8443"),
+		Realm:           getEnvStr("KEYCLOAK_REALM", "devprep"),
+		RefreshInterval: getEnvDuration("KEYCLOAK_JWKS_REFRESH", 15*time.Minute),
+	}
+
+	oidcBase := keycloak.RealmURL() + "/protocol/openid-connect"
 
 	cfg := &Config{
 		Server: ServerConfig{
@@ -83,17 +97,17 @@ func Load() (*Config, error) {
 			MaxIdleConns:    getEnvInt("DB_MAX_IDLE_CONNS", 5),
 			ConnMaxLifetime: getEnvDuration("DB_CONN_MAX_LIFETIME", 5*time.Minute),
 		},
-		Keycloak: KeycloakConfig{
-			URL:             getEnvStr("KEYCLOAK_URL", "http://localhost:8443"),
-			Realm:           getEnvStr("KEYCLOAK_REALM", "devprep"),
-			RefreshInterval: getEnvDuration("KEYCLOAK_JWKS_REFRESH", 15*time.Minute),
-		},
+		Keycloak: keycloak,
 		Redis: RedisConfig{
 			Addr:        getEnvStr("REDIS_ADDR", "localhost:6379"),
 			Password:    getEnvStr("REDIS_PASSWORD", ""),
 			DB:          getEnvInt("REDIS_DB", 0),
 			TopicTTL:    getEnvDuration("REDIS_TOPIC_TTL", 10*time.Minute),
 			QuestionTTL: getEnvDuration("REDIS_QUESTION_TTL", 10*time.Minute),
+		},
+		Swagger: SwaggerConfig{
+			OAuth2AuthorizationUrl: getEnvStr("SWAGGER_OAUTH2_AUTHORIZATION_URL", oidcBase+"/auth"),
+			OAuth2TokenUrl:         getEnvStr("SWAGGER_OAUTH2_TOKEN_URL", oidcBase+"/token"),
 		},
 	}
 

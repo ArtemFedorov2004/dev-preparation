@@ -54,10 +54,9 @@ func main() {
 		os.Exit(1)
 	}
 
-	oidcBase := cfg.Keycloak.RealmURL() + "/protocol/openid-connect"
 	docs.SwaggerInfo.SwaggerTemplate = strings.NewReplacer(
-		"http://KEYCLOAK_AUTH_URL", oidcBase+"/auth",
-		"http://KEYCLOAK_TOKEN_URL", oidcBase+"/token",
+		"http://KEYCLOAK_AUTH_URL", cfg.Swagger.OAuth2AuthorizationUrl,
+		"http://KEYCLOAK_TOKEN_URL", cfg.Swagger.OAuth2TokenUrl,
 	).Replace(docs.SwaggerInfo.SwaggerTemplate)
 
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
